@@ -1,7 +1,7 @@
-FROM eclipse-temurin:17-jdk
+FROM openjdk:17-jdk-slim
 
 WORKDIR /app
 
-ADD target/*.jar agent.jar
+COPY target/poc-demo-1.0.jar app.jar
 
-CMD ["java", "-jar", "agent.jar"]
+ENTRYPOINT ["java","-jar","/app/app.jar"]
