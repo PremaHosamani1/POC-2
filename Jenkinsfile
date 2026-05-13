@@ -12,13 +12,7 @@ pipeline {
 
         stage('Clone Code') {
             steps {
-                git 'https://github.com/PremaHosamani1/POC-2.git'
-            }
-        }
-
-        stage('Build JAR') {
-            steps {
-                sh 'mvn clean package -DskipTests'
+                git 'https://github.com/YOUR_USERNAME/poc-demo.git'
             }
         }
 
@@ -40,26 +34,22 @@ pipeline {
 
         stage('Tag Image') {
             steps {
-                sh '''
-                docker tag poc:latest $ECR_REPO
-                '''
+                sh 'docker tag poc:latest $ECR_REPO'
             }
         }
 
         stage('Push to ECR') {
             steps {
-                sh '''
-                docker push $ECR_REPO
-                '''
+                sh 'docker push $ECR_REPO'
             }
         }
 
-        stage('Run Container (POC Deploy)') {
+        stage('Deploy') {
             steps {
                 sh '''
                 docker stop poc-container || true
                 docker rm poc-container || true
-                docker run -d -p 8081:8081 --name poc-container poc
+                docker run -d -p 8081:8081 --name poc-container $ECR_REPO
                 '''
             }
         }
