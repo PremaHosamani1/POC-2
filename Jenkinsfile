@@ -16,6 +16,12 @@ pipeline {
             }
         }
 
+        stage('Check AWS Identity') {
+           steps {
+              sh 'aws sts get-caller-identity'
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 sh 'docker build -t poc .'
