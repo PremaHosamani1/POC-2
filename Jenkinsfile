@@ -1,59 +1,67 @@
-node('amazon-linux-node') {
+pipeline {
+    agent any
 
-    def AWS_ACCOUNT = "040162742712"
-    def REGION = "us-east-1"
-    def ECR_REPO = "${AWS_ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/poc:latest"
-
-    stage('Checkout') {
-        checkout scm
+    environment {
+        AWS_ACCOUNT = "040162742712"
+        REGION = "us-east-1"
+        IMAGE_NAME = "poc"
+        ECR_REPO = "${AWS_ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/poc:latest"
     }
 
-    stage('Build (Maven Package)') {
-        def mvn = tool 'Maven'
-        sh "${mvn}/bin/mvn clean package"
+    stages {
 
-        // 🔍 IMPORTANT: verify jar exists
-        sh "ls -l target/"
-    }
+        stage('Clone Code') {
+            steps {
+                git 'https://github.com/YOUR_USERNAME/poc-demo.git'
+            }
+        }
 
+        stage('Build JAR') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
 
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t poc .'
+            }
+        }
 
-    stage('Debug Jar') {
-    sh 'ls -l target/'
-    sh 'find . -name "*.jar"'
-}
+        stage('Login to ECR') {
+            steps {
+                sh '''
+                aws ecr get-login-password --region $REGION | \
+                docker login --username AWS --password-stdin \
+                $AWS_ACCOUNT.dkr.ecr.$REGION.amazonaws.com
+                '''
+            }
+        }
 
-    stage('Docker Build') {
-        sh """
-        set -e
+        stage('Tag Image') {
+            steps {
+                sh '''
+                docker tag poc:latest $ECR_REPO
+                '''
+            }
+        }
 
-        echo "Checking jar..."
-        ls -l target/
+        stage('Push to ECR') {
+            steps {
+                sh '''
+                docker push $ECR_REPO
+                '''
+            }
+        }
 
-        echo "Building Docker image..."
-        docker build -t poc:latest .
-        """
-    }
-
-    stage('Docker Push to ECR') {
-        sh """
-        aws ecr get-login-password --region ${REGION} | \
-        docker login --username AWS --password-stdin ${AWS_ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com
-
-        docker tag poc:latest ${ECR_REPO}
-        docker push ${ECR_REPO}
-        """
-    }
-
-    stage('Deploy') {
-        sh """
-        set -e
-
-        docker rm -f poc || true
-
-        docker pull ${ECR_REPO}
-
-        docker run -d -p 8081:8080 --name poc ${ECR_REPO}
-        """
+        stage('Run Container (POC Deploy)') {
+            steps {
+                sh '''
+                docker stop poc-container || true
+                docker rm poc-container || true
+                docker run -d -p 8080:8081 --name poc-container poc
+                '''
+            }
+        }
     }
 }
