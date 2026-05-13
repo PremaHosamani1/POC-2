@@ -12,7 +12,7 @@ pipeline {
 
         stage('Clone Code') {
             steps {
-                git 'https://github.com/YOUR_USERNAME/poc-demo.git'
+                git 'https://github.com/PremaHosamani1/POC-2.git'
             }
         }
 
@@ -59,7 +59,7 @@ pipeline {
                 sh '''
                 docker stop poc-container || true
                 docker rm poc-container || true
-                docker run -d -p 8080:8081 --name poc-container poc
+                docker run -d -p 8081:8081 --name poc-container poc
                 '''
             }
         }
