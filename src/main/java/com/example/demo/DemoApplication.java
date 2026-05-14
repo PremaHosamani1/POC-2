@@ -10,7 +10,7 @@ public class DemoApplication {
 
     @GetMapping("/")
     public String home() {
-        return "POC App Running 🚀";
+        return "POC Working 🚀";
     }
 
     public static void main(String[] args) {
