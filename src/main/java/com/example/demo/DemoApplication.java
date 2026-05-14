@@ -10,7 +10,7 @@ public class DemoApplication {
 
     @GetMapping("/")
     public String home() {
-        return "Jenkins Pipeline is working fine";
+        return "Jenkins Pipeline is working fine2";
     }
 
     public static void main(String[] args) {
