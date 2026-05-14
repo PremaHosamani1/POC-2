@@ -11,7 +11,14 @@ pipeline {
 
         stage('Checkout') {
             steps {
+                deleteDir()
                 git branch: 'main', url: 'https://github.com/PremaHosamani1/POC-2.git'
+            }
+        }
+
+        stage('Verify Code') {
+            steps {
+                sh 'grep -i "POC" src/main/java/com/example/demo/DemoApplication.java'
             }
         }
 
@@ -21,32 +28,12 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
-            steps {
-                sh '''
-                echo "Building fresh image with unique tag..."
-                docker build --no-cache -t $IMAGE_NAME:$BUILD_NUMBER .
-                '''
-            }
-        }
-
         stage('Deploy') {
             steps {
                 sh '''
-                echo "Stopping old container..."
-                docker rm -f $CONTAINER_NAME || true
-
-                echo "Running new container with latest image..."
-                docker run -d -p $PORT:8080 --name $CONTAINER_NAME $IMAGE_NAME:$BUILD_NUMBER
-                '''
-            }
-        }
-
-        stage('Cleanup Old Images') {
-            steps {
-                sh '''
-                echo "Cleaning unused images..."
-                docker image prune -f
+                docker rm -f poc-container || true
+                docker build --no-cache -t poc .
+                docker run -d -p 8081:8080 --name poc-container poc
                 '''
             }
         }
