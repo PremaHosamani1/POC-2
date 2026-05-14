@@ -21,26 +21,32 @@ pipeline {
             }
         }
 
-        stage('Deploy Fresh Container') {
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                echo "Building fresh image with unique tag..."
+                docker build --no-cache -t $IMAGE_NAME:$BUILD_NUMBER .
+                '''
+            }
+        }
+
+        stage('Deploy') {
             steps {
                 sh '''
                 echo "Stopping old container..."
                 docker rm -f $CONTAINER_NAME || true
 
-                echo "Removing old image..."
-                docker rmi $IMAGE_NAME || true
+                echo "Running new container with latest image..."
+                docker run -d -p $PORT:8080 --name $CONTAINER_NAME $IMAGE_NAME:$BUILD_NUMBER
+                '''
+            }
+        }
 
-                echo "Building new image..."
-                docker build --no-cache -t $IMAGE_NAME .
-
-                echo "Running new container..."
-                docker run -d -p $PORT:8080 --name $CONTAINER_NAME $IMAGE_NAME
-
-                echo "Waiting for app to start..."
-                sleep 10
-
-                echo "Testing app..."
-                curl http://localhost:$PORT || true
+        stage('Cleanup Old Images') {
+            steps {
+                sh '''
+                echo "Cleaning unused images..."
+                docker image prune -f
                 '''
             }
         }
