@@ -5,7 +5,39 @@ pipeline {
         AWS_ACCOUNT = "040162742712"
         REGION = "us-east-1"
         IMAGE_NAME = "poc"
-        ECR_REPO = "${AWS_ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/poc:latest"
+        ECR_REPO = "${AWS_ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/poc:latest"pipeline {
+    agent any
+
+    stages {
+
+        stage('Clone') {
+            steps {
+                git 'https://github.com/PremaHosamani1/POC-2.git'
+            }
+        }
+
+        stage('Build JAR') {
+            steps {
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t poc-simple .'
+            }
+        }
+
+        stage('Run Container') {
+            steps {
+                sh '''
+                docker rm -f poc-container || true
+                docker run -d -p 8081:8080 --name poc-container poc-simple
+                '''
+            }
+        }
+    }
+}
     }
 
     stages {
