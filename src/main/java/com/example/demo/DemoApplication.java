@@ -10,7 +10,7 @@ public class DemoApplication {
 
     @GetMapping("/")
     public String home() {
-        return "POC Working 🚀";
+        return "Jenkins Pipeline is working";
     }
 
     public static void main(String[] args) {
