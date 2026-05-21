@@ -7,6 +7,10 @@ pipeline {
         PORT = "8081"
     }
 
+    tools {
+        maven 'Default Maven'
+    }
+
     stages {
 
         stage('Checkout') {
@@ -21,12 +25,26 @@ pipeline {
                 sh 'grep -i "POC" src/main/java/com/example/demo/DemoApplication.java'
             }
         }
+
         stage('DEBUG: Show Code') {
             steps {
                 sh '''
                 echo "==== FILE CONTENT ===="
                 cat src/main/java/com/example/demo/DemoApplication.java
                 '''
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv() {
+                    sh '''
+                    mvn clean verify \
+                    org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                    -Dsonar.projectKey=poc-project \
+                    -Dsonar.projectName="POC Project"
+                    '''
+                }
             }
         }
 
