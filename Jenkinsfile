@@ -24,11 +24,9 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     sh '''
-                    mvn clean verify \
-                    org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                    mvn clean verify sonar:sonar \
                     -Dsonar.projectKey=poc-project \
-                    -Dsonar.projectName="POC Project" \
-                    -Dsonar.host.url=http://54.147.54.211:9000 \
+                    -Dsonar.projectName="POC Project" 
                     '''
                 }
             }
