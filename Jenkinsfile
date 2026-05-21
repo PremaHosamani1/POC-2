@@ -37,7 +37,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('Sonarqube') {
+                withSonarQubeEnv('SonarQube') {
                     sh '''
                     mvn clean verify \
                     org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
