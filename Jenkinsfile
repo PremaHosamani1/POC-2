@@ -20,21 +20,6 @@ pipeline {
             }
         }
 
-        stage('Verify Code') {
-            steps {
-                sh 'grep -i "POC" src/main/java/com/example/demo/DemoApplication.java'
-            }
-        }
-
-        stage('DEBUG: Show Code') {
-            steps {
-                sh '''
-                echo "==== FILE CONTENT ===="
-                cat src/main/java/com/example/demo/DemoApplication.java
-                '''
-            }
-        }
-
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
