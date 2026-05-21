@@ -42,7 +42,7 @@ pipeline {
                     mvn clean verify \
                     org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
                     -Dsonar.projectKey=poc-project \
-                    -Dsonar.projectName="POC Project"
+                    -Dsonar.projectName="POC Project" \
                     -Dsonar.host.url=http://54.147.54.211:9000 \
                     '''
                 }
