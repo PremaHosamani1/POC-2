@@ -1,51 +1,73 @@
 pipeline {
-    agent any
+agent any
 
-    environment {
-        IMAGE_NAME = "poc"
-        CONTAINER_NAME = "poc-container"
-        PORT = "8081"
-    }
+```
+environment {
+    AWS_REGION = 'us-east-1'
+    ACCOUNT_ID = '040162742712'
+    REPO_NAME = 'java-demo-app'
 
-    tools {
-        maven 'Maven'
-    }
+    IMAGE_URI = "${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${REPO_NAME}"
+}
 
-    stages {
+stages {
 
-        stage('Checkout') {
-            steps {
-                deleteDir()
-                git branch: 'main', url: 'https://github.com/PremaHosamani1/POC-2.git'
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('SonarQube') {
-                    sh '''
-                    mvn clean verify sonar:sonar \
-                    -Dsonar.projectKey=poc-project \
-                    -Dsonar.projectName="POC Project" 
-                    '''
-                }
-            }
-        }
-
-        stage('Build JAR') {
-            steps {
-                sh 'mvn clean package -DskipTests'
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                sh '''
-                docker rm -f poc-container || true
-                docker build --no-cache -t poc .
-                docker run -d -p 8081:8080 --name poc-container poc
-                '''
-            }
+    stage('Checkout') {
+        steps {
+            checkout scm
         }
     }
+
+    stage('Build Maven Project') {
+        steps {
+            sh 'mvn clean package'
+        }
+    }
+
+    stage('Login to ECR') {
+        steps {
+            sh '''
+            aws ecr get-login-password --region ${AWS_REGION} \
+            | docker login --username AWS \
+            --password-stdin \
+            ${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+            '''
+        }
+    }
+
+    stage('Build Docker Image') {
+        steps {
+            sh '''
+            docker build \
+            -t ${IMAGE_URI}:${BUILD_NUMBER} \
+            -t ${IMAGE_URI}:latest .
+            '''
+        }
+    }
+
+    stage('Push Docker Image') {
+        steps {
+            sh '''
+            docker push ${IMAGE_URI}:${BUILD_NUMBER}
+            docker push ${IMAGE_URI}:latest
+            '''
+        }
+    }
+
+    stage('Deploy Container') {
+        steps {
+            sh '''
+            docker rm -f java-app || true
+
+            docker run -d \
+            --name java-app \
+            --restart always \
+            -p 8081:8080 \
+            ${IMAGE_URI}:${BUILD_NUMBER}
+            '''
+        }
+    }
+}
+```
+
 }
